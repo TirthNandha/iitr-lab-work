@@ -1,4 +1,5 @@
-insertion sort using LL
-merge and quick sort using List
-largest element <=k using binary search
-bubble sort using vector
+1. insertion sort using LL
+2. merge sort using List
+3. quick sort using list
+4. index of largest element <=k using binary search
+5. bubble sort using vector
