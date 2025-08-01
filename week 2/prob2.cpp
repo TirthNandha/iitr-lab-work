@@ -11,11 +11,11 @@ protected:
     int n, m;
     bool directed;
 public:
-    Graph(bool isDirected = false) {
+    Graph(bool isDirected) {
         directed = isDirected;
     }
-    virtual void readInput() = 0;
-    virtual void run() = 0;
+    virtual void getInput() = 0;
+    virtual void algo() = 0;
 };
 
 class BFSGraph : public Graph {
@@ -24,7 +24,7 @@ class BFSGraph : public Graph {
 public:
     BFSGraph(bool isDirected) : Graph(isDirected) {}
 
-    void readInput() {
+    void getInput() {
         cin >> n >> m;
         adj = vector<vector<int>>(n);
         for (int i = 0; i < m; i++) {
@@ -37,7 +37,7 @@ public:
         }
     }
 
-    void run() {
+    void algo() {
         vector<bool> visited(adj.size(), false);
         vector<pair<int, int>> res;
         queue<pair<int, int>> queue;
@@ -73,7 +73,7 @@ class DFSGraph : public Graph {
 public:
     DFSGraph(bool isDirected) : Graph(isDirected) {}
 
-    void readInput() {
+    void getInput() {
         cin >> n >> m;
         adj = vector<vector<int>>(n);
         for (int i = 0; i < m; i++) {
@@ -89,15 +89,14 @@ public:
     void dfsRec(vector<vector<int>> &adj, vector<bool> &visited, int s, int level, vector<pair<int, int>> &res) {
         visited[s] = true;
         res.push_back({s, level});
-        for (int i = 0; i < adj[s].size(); i++) {
-            int adjVert = adj[s][i];
+        for (int adjVert : adj[s]) {
             if (!visited[adjVert]) {
                 dfsRec(adj, visited, adjVert, level + 1, res);
             }
         }
     }
 
-    void run() {
+    void algo() {
         vector<bool> visited(adj.size(), false);
         vector<pair<int, int>> res;
         dfsRec(adj, visited, 0, 0, res);
@@ -113,7 +112,7 @@ class DijkstraGraph : public Graph {
 public:
     DijkstraGraph(bool isDirected) : Graph(isDirected) {}
 
-    void readInput() {
+    void getInput() {
         cin >> n >> m;
         adj = vector<list<pair<int, int>>>(n);
         for (int i = 0; i < m; i++) {
@@ -126,7 +125,7 @@ public:
         }
     }
 
-    void run() {
+    void algo() {
         vector<int> visited(n, false);
         vector<int> dist(n, INT_MAX);
         vector<int> parent(n, -1);
@@ -144,9 +143,9 @@ public:
             if (visited[u]) continue;
             visited[u] = true;
 
-            for (list<pair<int, int>>::iterator it = adj[u].begin(); it != adj[u].end(); it++) {
-                int v = it->first;
-                int w = it->second;
+            for(auto &edge: adj[u]){
+                int v = edge.first;
+                int w = edge.second;
                 if (!visited[v] && dist[u] + w < dist[v]) {
                     dist[v] = dist[u] + w;
                     parent[v] = u;
@@ -169,7 +168,7 @@ class WBFSGraph : public Graph {
 public:
     WBFSGraph(bool isDirected) : Graph(isDirected) {}
 
-    void readInput() {
+    void getInput() {
         cin >> n >> m;
         adj = vector<list<pair<int, int>>>(n);
         for (int i = 0; i < m; i++) {
@@ -182,7 +181,7 @@ public:
         }
     }
 
-    void run() {
+    void algo() {
         vector<int> dist(n, INT_MAX);
         vector<int> parent(n, -1);
         vector<bool> visited(n, false);
@@ -198,9 +197,9 @@ public:
             if (visited[u]) continue;
             visited[u] = true;
 
-            for (list<pair<int, int>>::iterator it = adj[u].begin(); it != adj[u].end(); it++) {
-                int v = it->first;
-                int w = it->second;
+            for (auto &edge : adj[u]) {
+                int v = edge.first;
+                int w = edge.second;
                 if (dist[u] + w < dist[v]) {
                     dist[v] = dist[u] + w;
                     parent[v] = u;
@@ -227,7 +226,7 @@ class PrimGraph : public Graph {
 public:
     PrimGraph(bool isDirected) : Graph(isDirected) {}
 
-    void readInput() {
+    void getInput() {
         cin >> n >> m;
         adj = vector<list<pair<int, int>>>(n);
         for (int i = 0; i < m; i++) {
@@ -238,7 +237,7 @@ public:
         }
     }
 
-    void run() {
+    void algo() {
         vector<bool> visited(n, false);
         vector<int> parent(n, -1);
         vector<int> key(n, INT_MAX);
@@ -255,9 +254,9 @@ public:
             if (visited[u]) continue;
             visited[u] = true;
 
-            for (list<pair<int, int>>::iterator it = adj[u].begin(); it != adj[u].end(); it++) {
-                int v = it->first;
-                int w = it->second;
+            for (auto &edge : adj[u]) {
+                int v = edge.first;
+                int w = edge.second;
                 if (!visited[v] && w < key[v]) {
                     key[v] = w;
                     parent[v] = u;
@@ -303,8 +302,8 @@ int main() {
     }
 
     if (g != NULL) {
-        g->readInput();
-        g->run();
+        g->getInput();
+        g->algo();
     }
 
     return 0;

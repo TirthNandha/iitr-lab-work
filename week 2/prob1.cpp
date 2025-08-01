@@ -66,11 +66,10 @@ void dijkstra(vector<list<pair<int,int>>> &adj) {
     while(!pq.empty()){
         pair<int, int> top = pq.top();
         pq.pop();
-        int  d = top.first;
+        int d = top.first;
         int u = top.second;
 
         if(visited[u]) continue;
-
         visited[u] = true;
         
         for(auto &edge: adj[u]){
@@ -85,11 +84,11 @@ void dijkstra(vector<list<pair<int,int>>> &adj) {
     }
     for (int v = 1; v < n; ++v) {
         if (parent[v] != -1) {
-            cout << parent[v] << " " << v << "\n";
+            cout << parent[v] << " " << v << endl;
         }
     }
 }
-void wbfs(vector<list<pair<int,int>>> &adj);void wbfs(vector<list<pair<int, int>>> &adj) {
+void wbfs(vector<list<pair<int, int>>> &adj) {
     int n = adj.size();
     vector<int> dist(n, INT_MAX);
     vector<int> parent(n, -1);
@@ -122,7 +121,7 @@ void wbfs(vector<list<pair<int,int>>> &adj);void wbfs(vector<list<pair<int, int>
 
     for (int v = 0; v < n; ++v) {
         if (parent[v] != -1) {
-            cout << parent[v] << " " << v << "\n";
+            cout << parent[v] << " " << v << endl;
         }
     }
 }
@@ -157,7 +156,7 @@ void prim(vector<list<pair<int,int>>> &adj) {
 
     for (int v = 1; v < n; ++v) {
         if (parent[v] != -1) {
-            cout << parent[v] << " " << v << "\n";
+            cout << parent[v] << " " << v << endl;
         }
     }
 }
