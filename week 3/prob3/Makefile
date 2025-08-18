@@ -1,29 +1,28 @@
+# Simple Makefile for sorting algorithms
 CXX = g++
-CXXFLAGS = -std=c++17 -O2
-ALGORITHMS = bubble selection merge quick rquick heap
-INPUT_SIZE = 10000
-RUNS = 100
+CXXFLAGS = -std=c++11
 
-all: $(ALGORITHMS)
+ALGO ?= merge
+SIZE ?= 10000
 
-%: %.cpp
-	$(CXX) $(CXXFLAGS) $< -o $@
+all: sorting_test
 
-run: $(ALGORITHMS)
-	@for algo in $(ALGORITHMS); do \
-		echo "Running $$algo..."; \
-		rm -f summary.txt; \
-		for i in $$(seq 1 $(RUNS)); do \
-			/usr/bin/time -f "TOTAL %U %M" -o tmp_summary.txt --append ./$$algo $(INPUT_SIZE); \
-		done; \
-		mv tmp_summary.txt $$algo_summary.txt; \
-	done
+sorting_test: sorting_test.cpp
+	$(CXX) $(CXXFLAGS) -o sorting_test sorting_test.cpp
 
-summarize:
-	@bash process.sh
+test: sorting_test
+	./sorting_test $(ALGO) $(SIZE)
 
-plot:
-	gnuplot -p plot.gnuplot
+run: sorting_test
+	./sorting_test $(ALGO) $(SIZE)
+
+analyze: sorting_test
+	chmod +x process.sh
+	./process.sh
+	gnuplot plot_time.gnu
+	gnuplot plot_memory.gnu
 
 clean:
-	rm -f $(ALGORITHMS) *_summary.txt data.txt plot.png
+	rm -f sorting_test *.png results/*.txt *.gnu
+
+.PHONY: all test run analyze clean
