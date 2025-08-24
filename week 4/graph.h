@@ -9,6 +9,7 @@
 #include <iostream>
 #include <random>
 #include <set>
+using namespace std;
 
 struct Edge {
     int to;
@@ -20,8 +21,8 @@ class Graph {
 public:
     int n; // number of nodes
     int m; // number of edges
-    std::vector<std::vector<Edge>> adj; // adjacency list
-    std::vector<std::vector<Edge>> adj_rev; // reverse adjacency list for directed graphs
+    vector<vector<Edge>> adj; // adjacency list
+    vector<vector<Edge>> adj_rev; // reverse adjacency list for directed graphs
     bool directed;
     
     Graph(int nodes, bool dir = false) : n(nodes), m(0), directed(dir) {
@@ -53,7 +54,7 @@ public:
         int maxPossibleEdges = directed ? nodes * (nodes - 1) : nodes * (nodes - 1) / 2;
         edges = std::min(edges, maxPossibleEdges);
         
-        std::set<std::pair<int, int>> usedEdges;
+        set<pair<int, int>> usedEdges;
         
         while (g.m < edges) {
             int u = rand() % nodes;
@@ -61,7 +62,7 @@ public:
             
             if (u == v) continue; // no self-loops
             
-            if (!directed && u > v) std::swap(u, v); // for undirected graphs, normalize edge representation
+            if (!directed && u > v) swap(u, v); // for undirected graphs, normalize edge representation
             
             if (usedEdges.find({u, v}) == usedEdges.end()) {
                 int weight = (maxWeight > 1) ? (rand() % maxWeight) + 1 : 1;
@@ -82,9 +83,9 @@ public:
         
         Graph g(nodes, directed);
         int maxPossibleEdges = directed ? nodes * (nodes - 1) : nodes * (nodes - 1) / 2;
-        edges = std::min(edges, maxPossibleEdges);
+        edges = min(edges, maxPossibleEdges);
         
-        std::set<std::pair<int, int>> usedEdges;
+        set<pair<int, int>> usedEdges;
         
         while (g.m < edges) {
             int u = rand() % nodes;
@@ -92,7 +93,7 @@ public:
             
             if (u == v) continue;
             
-            if (!directed && u > v) std::swap(u, v);
+            if (!directed && u > v) swap(u, v);
             
             if (usedEdges.find({u, v}) == usedEdges.end()) {
                 double r = (double)rand() / RAND_MAX;

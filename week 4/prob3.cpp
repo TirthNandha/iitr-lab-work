@@ -1,13 +1,13 @@
 #include "graph.h"
 #include <queue>
-#include <stack>
 #include <vector>
 #include <iostream>
 #include <chrono>
 #include <algorithm>
+using namespace std;
 
 // DFS helper for SCC algorithms
-void dfs_scc(const Graph& g, int u, std::vector<bool>& visited, std::vector<int>& component, int comp_id) {
+void dfs_scc(const Graph& g, int u, vector<bool>& visited, vector<int>& component, int comp_id) {
     visited[u] = true;
     component[u] = comp_id;
     
@@ -19,7 +19,7 @@ void dfs_scc(const Graph& g, int u, std::vector<bool>& visited, std::vector<int>
 }
 
 // DFS on reverse graph
-void dfs_scc_rev(const Graph& g, int u, std::vector<bool>& visited, std::vector<int>& component, int comp_id) {
+void dfs_scc_rev(const Graph& g, int u, vector<bool>& visited, vector<int>& component, int comp_id) {
     visited[u] = true;
     component[u] = comp_id;
     
@@ -31,8 +31,8 @@ void dfs_scc_rev(const Graph& g, int u, std::vector<bool>& visited, std::vector<
 }
 
 // BFS helper for SCC algorithms
-void bfs_scc(const Graph& g, int start, std::vector<bool>& visited, std::vector<int>& component, int comp_id) {
-    std::queue<int> q;
+void bfs_scc(const Graph& g, int start, vector<bool>& visited, vector<int>& component, int comp_id) {
+    queue<int> q;
     q.push(start);
     visited[start] = true;
     component[start] = comp_id;
@@ -52,8 +52,8 @@ void bfs_scc(const Graph& g, int start, std::vector<bool>& visited, std::vector<
 }
 
 // BFS on reverse graph
-void bfs_scc_rev(const Graph& g, int start, std::vector<bool>& visited, std::vector<int>& component, int comp_id) {
-    std::queue<int> q;
+void bfs_scc_rev(const Graph& g, int start, vector<bool>& visited, vector<int>& component, int comp_id) {
+    queue<int> q;
     q.push(start);
     visited[start] = true;
     component[start] = comp_id;
@@ -73,18 +73,18 @@ void bfs_scc_rev(const Graph& g, int start, std::vector<bool>& visited, std::vec
 }
 
 // Algorithm 1: DFS on G and G_R, mark common visited vertices
-std::vector<int> scc_algo1(const Graph& g) {
-    std::vector<int> component(g.n, -1);
+vector<int> algo1(const Graph& g) {
+    vector<int> component(g.n, -1);
     int comp_id = 0;
     
     for (int i = 0; i < g.n; i++) {
         if (component[i] == -1) {
             // DFS from i in G
-            std::vector<bool> visited_g(g.n, false);
+            vector<bool> visited_g(g.n, false);
             dfs_scc(g, i, visited_g, component, comp_id);
             
             // DFS from i in G_R
-            std::vector<bool> visited_gr(g.n, false);
+            vector<bool> visited_gr(g.n, false);
             dfs_scc_rev(g, i, visited_gr, component, comp_id);
             
             // Mark only common visited vertices
@@ -104,18 +104,18 @@ std::vector<int> scc_algo1(const Graph& g) {
 }
 
 // Algorithm 2: BFS version of Algorithm 1
-std::vector<int> scc_algo2(const Graph& g) {
-    std::vector<int> component(g.n, -1);
+vector<int> algo2(const Graph& g) {
+    vector<int> component(g.n, -1);
     int comp_id = 0;
     
     for (int i = 0; i < g.n; i++) {
         if (component[i] == -1) {
             // BFS from i in G
-            std::vector<bool> visited_g(g.n, false);
+            vector<bool> visited_g(g.n, false);
             bfs_scc(g, i, visited_g, component, comp_id);
             
             // BFS from i in G_R
-            std::vector<bool> visited_gr(g.n, false);
+            vector<bool> visited_gr(g.n, false);
             bfs_scc_rev(g, i, visited_gr, component, comp_id);
             
             // Mark only common visited vertices
@@ -135,8 +135,8 @@ std::vector<int> scc_algo2(const Graph& g) {
 }
 
 // DFS with finish time recording
-void dfs_finish_time(const Graph& g, int u, std::vector<bool>& visited, 
-                     std::vector<int>& finish_time, int& time_counter) {
+void dfs_finish_time(const Graph& g, int u, vector<bool>& visited, 
+                     vector<int>& finish_time, int& time_counter) {
     visited[u] = true;
     
     for (const Edge& e : g.adj[u]) {
@@ -149,10 +149,10 @@ void dfs_finish_time(const Graph& g, int u, std::vector<bool>& visited,
 }
 
 // Algorithm 3: Kosaraju's algorithm
-std::vector<int> scc_algo3(const Graph& g) {
-    std::vector<int> component(g.n, -1);
-    std::vector<bool> visited(g.n, false);
-    std::vector<int> finish_time(g.n);
+vector<int> algo3(const Graph& g) {
+    vector<int> component(g.n, -1);
+    vector<bool> visited(g.n, false);
+    vector<int> finish_time(g.n);
     int time_counter = 0;
     
     // First DFS on G to get finish times
@@ -163,14 +163,14 @@ std::vector<int> scc_algo3(const Graph& g) {
     }
     
     // Create vertices sorted by reverse finish time
-    std::vector<std::pair<int, int>> finish_order;
+    vector<pair<int, int>> finish_order;
     for (int i = 0; i < g.n; i++) {
         finish_order.push_back({finish_time[i], i});
     }
-    std::sort(finish_order.rbegin(), finish_order.rend());
+    sort(finish_order.rbegin(), finish_order.rend());
     
     // Second DFS on G_R in reverse finish time order
-    std::fill(visited.begin(), visited.end(), false);
+    fill(visited.begin(), visited.end(), false);
     int comp_id = 0;
     
     for (auto& p : finish_order) {
@@ -186,14 +186,14 @@ std::vector<int> scc_algo3(const Graph& g) {
 
 int main(int argc, char* argv[]) {
     if (argc != 5) {
-        std::cerr << "Usage: " << argv[0] << " <graph_type> <n> <m_or_sparsity> <seed>" << std::endl;
-        std::cerr << "graph_type: VARM or VARN" << std::endl;
-        std::cerr << "For VARM: n=nodes, m=edges" << std::endl;
-        std::cerr << "For VARN: n=nodes, sparsity=1(2n), 2(nlogn), 3(n√n), 4(n(n-1)/2)" << std::endl;
-        return 1;
+        cout << "Usage: " << argv[0] << " <graph_type> <n> <m_or_sparsity> <seed>" << endl;
+        cout << "graph_type: VARM or VARN" << endl;
+        cout << "For VARM: n=nodes, m=edges" << endl;
+        cout << "For VARN: n=nodes, sparsity=1(2n), 2(nlogn), 3(n√n), 4(n(n-1)/2)" << endl;
+        return 0;
     }
     
-    std::string graph_type = argv[1];
+    string graph_type = argv[1];
     int n = atoi(argv[2]);
     int m_or_sparsity = atoi(argv[3]);
     unsigned seed = atoi(argv[4]);
@@ -207,41 +207,38 @@ int main(int argc, char* argv[]) {
             case 2: m = n * (int)(log(n) / log(2) + 0.5); break;
             case 3: m = n * (int)sqrt(n); break;
             case 4: m = n * (n - 1) / 2; break;
-            default: std::cerr << "Invalid sparsity option" << std::endl; return 1;
+            default: cout << "Invalid sparsity option" << endl; return 0;
         }
     } else {
-        std::cerr << "Invalid graph type" << std::endl;
-        return 1;
+        cout << "Invalid graph type" << endl;
+        return 0;
     }
     
     // Generate directed graph
     Graph g = Graph::generateRandomGraph(n, m, true, 1, seed);
     
     // Measure Algorithm 1
-    auto start_time = std::chrono::high_resolution_clock::now();
-    auto comp1 = scc_algo1(g);
-    auto end_time = std::chrono::high_resolution_clock::now();
-    auto algo1_time = std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time).count();
+    auto start_time = chrono::high_resolution_clock::now();
+    auto comp1 = algo1(g);
+    auto end_time = chrono::high_resolution_clock::now();
+    auto algo1_time = chrono::duration_cast<chrono::microseconds>(end_time - start_time).count();
     
     // Measure Algorithm 2
-    start_time = std::chrono::high_resolution_clock::now();
-    auto comp2 = scc_algo2(g);
-    end_time = std::chrono::high_resolution_clock::now();
-    auto algo2_time = std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time).count();
+    start_time = chrono::high_resolution_clock::now();
+    auto comp2 = algo2(g);
+    end_time = chrono::high_resolution_clock::now();
+    auto algo2_time = chrono::duration_cast<chrono::microseconds>(end_time - start_time).count();
     
     // Measure Algorithm 3
-    start_time = std::chrono::high_resolution_clock::now();
-    auto comp3 = scc_algo3(g);
-    end_time = std::chrono::high_resolution_clock::now();
-    auto algo3_time = std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time).count();
+    start_time = chrono::high_resolution_clock::now();
+    auto comp3 = algo3(g);
+    end_time = chrono::high_resolution_clock::now();
+    auto algo3_time = chrono::duration_cast<chrono::microseconds>(end_time - start_time).count();
     
     // Output results
-    std::cout << "SCC," << graph_type << "," << n << "," << m << ","
-              << "ALGO1_DFS," << algo1_time << std::endl;
-    std::cout << "SCC," << graph_type << "," << n << "," << m << ","
-              << "ALGO2_BFS," << algo2_time << std::endl;
-    std::cout << "SCC," << graph_type << "," << n << "," << m << ","
-              << "ALGO3_KOSARAJU," << algo3_time << std::endl;
+    cout << "SCC," << graph_type << "," << n << "," << m << "," << "ALGO1," << algo1_time << endl;
+    cout << "SCC," << graph_type << "," << n << "," << m << "," << "ALGO2," << algo2_time << endl;
+    cout << "SCC," << graph_type << "," << n << "," << m << "," << "ALGO3," << algo3_time << endl;
     
     return 0;
 }
