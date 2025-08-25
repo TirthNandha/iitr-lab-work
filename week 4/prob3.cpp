@@ -4,6 +4,7 @@
 #include <iostream>
 #include <chrono>
 #include <algorithm>
+#include <cmath>
 using namespace std;
 
 // DFS helper for SCC algorithms
@@ -185,11 +186,12 @@ vector<int> algo3(const Graph& g) {
 }
 
 int main(int argc, char* argv[]) {
-    if (argc != 5) {
-        cout << "Usage: " << argv[0] << " <graph_type> <n> <m_or_sparsity> <seed>" << endl;
+    if (argc < 5 || argc > 6) {
+        cout << "Usage: " << argv[0] << " <graph_type> <n> <m_or_sparsity> <seed> [algorithm]" << endl;
         cout << "graph_type: VARM or VARN" << endl;
         cout << "For VARM: n=nodes, m=edges" << endl;
         cout << "For VARN: n=nodes, sparsity=1(2n), 2(nlogn), 3(n√n), 4(n(n-1)/2)" << endl;
+        cout << "algorithm (optional): algo1, algo2, algo3" << endl;
         return 0;
     }
     
@@ -197,6 +199,7 @@ int main(int argc, char* argv[]) {
     int n = atoi(argv[2]);
     int m_or_sparsity = atoi(argv[3]);
     unsigned seed = atoi(argv[4]);
+    string algorithm = (argc == 6) ? argv[5] : "all";
     
     int m;
     if (graph_type == "VARM") {
@@ -204,7 +207,7 @@ int main(int argc, char* argv[]) {
     } else if (graph_type == "VARN") {
         switch (m_or_sparsity) {
             case 1: m = 2 * n; break;
-            case 2: m = n * (int)(log(n) / log(2) + 0.5); break;
+            case 2: m = n * (int)(log(n) + 0.5); break;
             case 3: m = n * (int)sqrt(n); break;
             case 4: m = n * (n - 1) / 2; break;
             default: cout << "Invalid sparsity option" << endl; return 0;
@@ -217,28 +220,54 @@ int main(int argc, char* argv[]) {
     // Generate directed graph
     Graph g = Graph::generateRandomGraph(n, m, true, 1, seed);
     
-    // Measure Algorithm 1
-    auto start_time = chrono::high_resolution_clock::now();
-    auto comp1 = algo1(g);
-    auto end_time = chrono::high_resolution_clock::now();
-    auto algo1_time = chrono::duration_cast<chrono::microseconds>(end_time - start_time).count();
-    
-    // Measure Algorithm 2
-    start_time = chrono::high_resolution_clock::now();
-    auto comp2 = algo2(g);
-    end_time = chrono::high_resolution_clock::now();
-    auto algo2_time = chrono::duration_cast<chrono::microseconds>(end_time - start_time).count();
-    
-    // Measure Algorithm 3
-    start_time = chrono::high_resolution_clock::now();
-    auto comp3 = algo3(g);
-    end_time = chrono::high_resolution_clock::now();
-    auto algo3_time = chrono::duration_cast<chrono::microseconds>(end_time - start_time).count();
-    
-    // Output results
-    cout << "SCC," << graph_type << "," << n << "," << m << "," << "ALGO1," << algo1_time << endl;
-    cout << "SCC," << graph_type << "," << n << "," << m << "," << "ALGO2," << algo2_time << endl;
-    cout << "SCC," << graph_type << "," << n << "," << m << "," << "ALGO3," << algo3_time << endl;
+    if (algorithm == "all") {
+        // Measure Algorithm 1
+        auto start_time = chrono::high_resolution_clock::now();
+        auto comp1 = algo1(g);
+        auto end_time = chrono::high_resolution_clock::now();
+        auto algo1_time = chrono::duration_cast<chrono::microseconds>(end_time - start_time).count();
+        
+        // Measure Algorithm 2
+        start_time = chrono::high_resolution_clock::now();
+        auto comp2 = algo2(g);
+        end_time = chrono::high_resolution_clock::now();
+        auto algo2_time = chrono::duration_cast<chrono::microseconds>(end_time - start_time).count();
+        
+        // Measure Algorithm 3
+        start_time = chrono::high_resolution_clock::now();
+        auto comp3 = algo3(g);
+        end_time = chrono::high_resolution_clock::now();
+        auto algo3_time = chrono::duration_cast<chrono::microseconds>(end_time - start_time).count();
+        
+        // Output results
+        cout << "SCC," << graph_type << "," << n << "," << m << "," << "ALGO1," << algo1_time << endl;
+        cout << "SCC," << graph_type << "," << n << "," << m << "," << "ALGO2," << algo2_time << endl;
+        cout << "SCC," << graph_type << "," << n << "," << m << "," << "ALGO3," << algo3_time << endl;
+    } else {
+        // Run only specified algorithm
+        auto start_time = chrono::high_resolution_clock::now();
+        
+        if (algorithm == "algo1") {
+            auto comp = algo1(g);
+        } else if (algorithm == "algo2") {
+            auto comp = algo2(g);
+        } else if (algorithm == "algo3") {
+            auto comp = algo3(g);
+        } else {
+            cout << "Invalid algorithm: " << algorithm << endl;
+            return 1;
+        }
+        
+        auto end_time = chrono::high_resolution_clock::now();
+        auto exec_time = chrono::duration_cast<chrono::microseconds>(end_time - start_time).count();
+        
+        string alg_name;
+        if (algorithm == "algo1") alg_name = "ALGO1";
+        else if (algorithm == "algo2") alg_name = "ALGO2";
+        else if (algorithm == "algo3") alg_name = "ALGO3";
+        
+        cout << "SCC," << graph_type << "," << n << "," << m << "," << alg_name << "," << exec_time << endl;
+    }
     
     return 0;
 }

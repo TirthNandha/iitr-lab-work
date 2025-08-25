@@ -6,6 +6,7 @@
 #include <limits>
 #include <functional>
 #include <deque>
+#include <cmath>
 using namespace std;
 
 const int INF = numeric_limits<int>::max();
@@ -94,22 +95,24 @@ vector<int> weighted_bfs(const Graph& g, int source, int c) {
     dist[source] = 0;
     buckets[0].push(source);
     
-    for (int d = 0, waves = 0; waves < g.n; d = (d + 1) % (c + 1)) {
-        while (!buckets[d].empty()) {
-            int u = buckets[d].front();
-            buckets[d].pop();
-            
-            if (dist[u] < d) continue;
-            
-            for (const Edge& e : g.adj[u]) {
-                if (dist[u] + e.weight < dist[e.to]) {
-                    dist[e.to] = dist[u] + e.weight;
-                    buckets[dist[e.to] % (c + 1)].push(e.to);
-                }
+    int d = 0;
+int processed = 0;
+while (processed < g.n) {
+    while (!buckets[d].empty()) {
+        int u = buckets[d].front();
+        buckets[d].pop();
+        if (dist[u] < d) continue;
+        for (const Edge& e : g.adj[u]) {
+            if (dist[u] + e.weight < dist[e.to]) {
+                dist[e.to] = dist[u] + e.weight;
+                buckets[dist[e.to] % (c + 1)].push(e.to);
             }
-            waves++;
         }
+        processed++;
     }
+    d = (d + 1) % (c + 1);
+}
+
     
     return dist;
 }
@@ -136,12 +139,13 @@ int get_max_weight(const Graph& g) {
 }
 
 int main(int argc, char* argv[]) {
-    if (argc != 6) {
-        cout << "Usage: " << argv[0] << " <graph_type> <n> <m_or_sparsity> <weight_type> <seed>" << endl;
+    if (argc < 6 || argc > 7) {
+        cout << "Usage: " << argv[0] << " <graph_type> <n> <m_or_sparsity> <weight_type> <seed> [algorithm]" << endl;
         cout << "graph_type: VARM or VARN" << endl;
         cout << "For VARM: n=nodes, m=edges" << endl;
         cout << "For VARN: n=nodes, sparsity=1(2n), 2(nlogn), 3(n√n), 4(n(n-1)/2)" << endl;
         cout << "weight_type: unweighted, 01, wbfs_c (where c is max weight)" << endl;
+        cout << "algorithm (optional): dijkstra, bfs" << endl;
         return 0;
     }
     
@@ -150,6 +154,7 @@ int main(int argc, char* argv[]) {
     int m_or_sparsity = atoi(argv[3]);
     string weight_type = argv[4];
     unsigned seed = atoi(argv[5]);
+    string algorithm = (argc == 7) ? argv[6] : "all";
     
     int m;
     if (graph_type == "VARM") {
@@ -157,7 +162,7 @@ int main(int argc, char* argv[]) {
     } else if (graph_type == "VARN") {
         switch (m_or_sparsity) {
             case 1: m = 2 * n; break;
-            case 2: m = n * (int)(log(n) / log(2) + 0.5); break;
+            case 2: m = n * (int)(log(n) + 0.5); break;
             case 3: m = n * (int)sqrt(n); break;
             case 4: m = n * (n - 1) / 2; break;
             default: cout << "Invalid sparsity option" << endl; return 0;
@@ -182,46 +187,79 @@ int main(int argc, char* argv[]) {
         return 0;
     }
     
-    // Run all sources shortest path (averaging over multiple sources)
+    // Run shortest path algorithm(s)
     int num_sources = min(10, n); // Test with 10 random sources
     
-    long long dijkstra_time = 0;
-    long long bfs_time = 0;
-    
-    for (int i = 0; i < num_sources; i++) {
-        int source = rand() % n;
+    if (algorithm == "all") {
+        long long dijkstra_time = 0;
+        long long bfs_time = 0;
         
-        // Measure Dijkstra
-        auto start_time = chrono::high_resolution_clock::now();
-        auto dist_dijkstra = dijkstra(g, source);
-        auto end_time = chrono::high_resolution_clock::now();
-        dijkstra_time += chrono::duration_cast<chrono::microseconds>(end_time - start_time).count();
-        
-        // Measure BFS variant
-        start_time = chrono::high_resolution_clock::now();
-        if (weight_type == "unweighted") {
-            auto dist_bfs = bfs_shortest_path(g, source);
+        for (int i = 0; i < num_sources; i++) {
+            int source = rand() % n;
+            
+            // Measure Dijkstra
+            auto start_time = chrono::high_resolution_clock::now();
+            auto dist_dijkstra = dijkstra(g, source);
+            auto end_time = chrono::high_resolution_clock::now();
+            dijkstra_time += chrono::duration_cast<chrono::microseconds>(end_time - start_time).count();
+            
+            // Measure BFS variant
+            start_time = chrono::high_resolution_clock::now();
+            if (weight_type == "unweighted") {
+                auto dist_bfs = bfs_shortest_path(g, source);
+            } else if (weight_type == "01") {
+                auto dist_bfs = zero_one_bfs(g, source);
+            } else if (weight_type.substr(0, 5) == "wbfs_") {
+                int c = atoi(weight_type.substr(5).c_str());
+                auto dist_bfs = weighted_bfs(g, source, c);
+            }
             end_time = chrono::high_resolution_clock::now();
-        } else if (weight_type == "01") {
-            auto dist_bfs = zero_one_bfs(g, source);
-            end_time = chrono::high_resolution_clock::now();
-        } else if (weight_type.substr(0, 5) == "wbfs_") {
-            int c = atoi(weight_type.substr(5).c_str());
-            auto dist_bfs = weighted_bfs(g, source, c);
-            end_time = chrono::high_resolution_clock::now();
+            bfs_time += chrono::duration_cast<chrono::microseconds>(end_time - start_time).count();
         }
-        bfs_time += chrono::duration_cast<chrono::microseconds>(end_time - start_time).count();
+        
+        // Average the times
+        dijkstra_time /= num_sources;
+        bfs_time /= num_sources;
+        
+        // Output results
+        cout << "SHORTEST_PATH," << graph_type << "," << n << "," << m << ","
+                  << weight_type << ",DIJKSTRA," << dijkstra_time << endl;
+        cout << "SHORTEST_PATH," << graph_type << "," << n << "," << m << ","
+                  << weight_type << ",BFS_VARIANT," << bfs_time << endl;
+    } else {
+        // Run only specified algorithm
+        long long exec_time = 0;
+        
+        for (int i = 0; i < num_sources; i++) {
+            int source = rand() % n;
+            auto start_time = chrono::high_resolution_clock::now();
+            
+            if (algorithm == "dijkstra") {
+                auto dist = dijkstra(g, source);
+            } else if (algorithm == "bfs") {
+                if (weight_type == "unweighted") {
+                    auto dist = bfs_shortest_path(g, source);
+                } else if (weight_type == "01") {
+                    auto dist = zero_one_bfs(g, source);
+                } else if (weight_type.substr(0, 5) == "wbfs_") {
+                    int c = atoi(weight_type.substr(5).c_str());
+                    auto dist = weighted_bfs(g, source, c);
+                }
+            } else {
+                cout << "Invalid algorithm: " << algorithm << endl;
+                return 1;
+            }
+            
+            auto end_time = chrono::high_resolution_clock::now();
+            exec_time += chrono::duration_cast<chrono::microseconds>(end_time - start_time).count();
+        }
+        
+        exec_time /= num_sources;
+        
+        string alg_name = (algorithm == "dijkstra") ? "DIJKSTRA" : "BFS_VARIANT";
+        cout << "SHORTEST_PATH," << graph_type << "," << n << "," << m << ","
+                  << weight_type << "," << alg_name << "," << exec_time << endl;
     }
-    
-    // Average the times
-    dijkstra_time /= num_sources;
-    bfs_time /= num_sources;
-    
-    // Output results
-    cout << "SHORTEST_PATH," << graph_type << "," << n << "," << m << ","
-              << weight_type << ",DIJKSTRA," << dijkstra_time << endl;
-    cout << "SHORTEST_PATH," << graph_type << "," << n << "," << m << ","
-              << weight_type << ",BFS_VARIANT," << bfs_time << endl;
     
     return 0;
 }

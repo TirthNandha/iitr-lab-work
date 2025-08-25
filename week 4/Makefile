@@ -1,21 +1,11 @@
-SHELL = /bin/bash
 CXX = g++
-CXXFLAGS = -std=c++11 -O3 -Wall
-TARGETS = prob1 prob2 prob3
-TIME_CMD = /usr/bin/time -f "%e,%M"
+CXXFLAGS = -O2 -std=c++17
+LOG_DIR = ./logs
+REPEAT = 5   # number of runs for averaging
 
-# Node sizes for VARN experiments (reduced for faster testing)
-VARN_NODES = 50 75 100 125 150
+all: prob1 prob2 prob3
 
-# Edge sizes for VARM experiments (reduced for faster testing)
-VARM_NODES = 50 75 100
-# Will vary from 2n to n(n-1)/2
-
-# Number of test runs per configuration (reduced for faster testing)
-RUNS = 3
-
-all: $(TARGETS)
-
+# Compile
 prob1: prob1.cpp graph.h
 	$(CXX) $(CXXFLAGS) -o prob1 prob1.cpp
 
@@ -25,99 +15,54 @@ prob2: prob2.cpp graph.h
 prob3: prob3.cpp graph.h
 	$(CXX) $(CXXFLAGS) -o prob3 prob3.cpp
 
+# Run experiments
+run: run_prob1 run_prob2 run_prob3
+
+# ---------------- Problem 1: Graph Traversal ----------------
+run_prob1: prob1
+	mkdir -p $(LOG_DIR)
+	# VARM: fixed N, vary M
+	for m in 400 800 1600 3200 6400; do \
+	  for i in $$(seq 1 $(REPEAT)); do \
+	    /usr/bin/time -f "MEMORY,VARM,200,$$m,BFS,%M" ./prob1 VARM 200 $$m $$i bfs >> $(LOG_DIR)/prob1_varm.log 2>&1; \
+	    /usr/bin/time -f "MEMORY,VARM,200,$$m,DFS_ITER,%M" ./prob1 VARM 200 $$m $$i dfs_iter >> $(LOG_DIR)/prob1_varm.log 2>&1; \
+	    /usr/bin/time -f "MEMORY,VARM,200,$$m,DFS_REC,%M" ./prob1 VARM 200 $$m $$i dfs_rec >> $(LOG_DIR)/prob1_varm.log 2>&1; \
+	  done; \
+	done
+	# VARN: fixed sparsity, vary N
+	for n in 100 200 400 600 800 1000; do \
+	  for i in $$(seq 1 $(REPEAT)); do \
+	    /usr/bin/time -f "MEMORY,VARN,$$n,2,BFS,%M" ./prob1 VARN $$n 2 $$i bfs >> $(LOG_DIR)/prob1_varn.log 2>&1; \
+	    /usr/bin/time -f "MEMORY,VARN,$$n,2,DFS_ITER,%M" ./prob1 VARN $$n 2 $$i dfs_iter >> $(LOG_DIR)/prob1_varn.log 2>&1; \
+	    /usr/bin/time -f "MEMORY,VARN,$$n,2,DFS_REC,%M" ./prob1 VARN $$n 2 $$i dfs_rec >> $(LOG_DIR)/prob1_varn.log 2>&1; \
+	  done; \
+	done
+
+# ---------------- Problem 2: Shortest Path ----------------
+run_prob2: prob2
+	mkdir -p $(LOG_DIR)
+	for n in 200 400 600 800 1000; do \
+	  for i in $$(seq 1 $(REPEAT)); do \
+	    /usr/bin/time -f "MEMORY,VARM,$$n,400,DIJKSTRA,%M" ./prob2 VARM $$n 400 unweighted $$i dijkstra >> $(LOG_DIR)/prob2.log 2>&1; \
+	    /usr/bin/time -f "MEMORY,VARM,$$n,400,BFS_VARIANT,%M" ./prob2 VARM $$n 400 unweighted $$i bfs >> $(LOG_DIR)/prob2.log 2>&1; \
+	  done; \
+	done
+
+# ---------------- Problem 3: SCC ----------------
+run_prob3: prob3
+	mkdir -p $(LOG_DIR)
+	for n in 200 400 600 800 1000; do \
+	  for i in $$(seq 1 $(REPEAT)); do \
+	    /usr/bin/time -f "MEMORY,VARM,$$n,400,ALGO1,%M" ./prob3 VARM $$n 400 $$i algo1 >> $(LOG_DIR)/prob3.log 2>&1; \
+	    /usr/bin/time -f "MEMORY,VARM,$$n,400,ALGO2,%M" ./prob3 VARM $$n 400 $$i algo2 >> $(LOG_DIR)/prob3.log 2>&1; \
+	    /usr/bin/time -f "MEMORY,VARM,$$n,400,ALGO3,%M" ./prob3 VARM $$n 400 $$i algo3 >> $(LOG_DIR)/prob3.log 2>&1; \
+	  done; \
+	done
+
+process: run
+	bash process.sh
+
 clean:
-	rm -f $(TARGETS) *.o
-	rm -f results/*.txt
-	rm -f plots/*.png
-
-# Create directories for results and plots
-dirs:
-	mkdir -p results plots
-
-# Run all experiments
-experiments: all dirs run_prob1 run_prob2 run_prob3
-
-# Problem 1 experiments
-run_prob1:
-	@echo "Running Problem 1 experiments..."
-	@rm -f results/prob1_raw.txt
-	@# VARM experiments
-	@for n in $(VARM_NODES); do \
-		m=$$((2*$$n)); \
-		max_m=$$(($$n*($$n-1)/2)); \
-		while [ $$m -le $$max_m ] && [ $$m -le $$((8*$$n)) ]; do \
-			for run in `seq 1 $(RUNS)`; do \
-				seed=$$(($$RANDOM)); \
-				echo "VARM n=$$n m=$$m run=$$run"; \
-				$(TIME_CMD) -o results/time_temp.txt ./prob1 VARM $$n $$m $$seed >> results/prob1_raw.txt 2>&1; \
-			done; \
-			m=$$(($$m*2)); \
-		done; \
-	done
-	@# VARN experiments
-	@for n in $(VARN_NODES); do \
-		for sparsity in 1 2 4; do \
-			for run in `seq 1 $(RUNS)`; do \
-				seed=$$(($$RANDOM)); \
-				echo "VARN n=$$n sparsity=$$sparsity run=$$run"; \
-				$(TIME_CMD) -o results/time_temp.txt ./prob1 VARN $$n $$sparsity $$seed >> results/prob1_raw.txt 2>&1; \
-			done; \
-		done; \
-	done
-
-# Problem 2 experiments
-run_prob2:
-	@echo "Running Problem 2 experiments..."
-	@rm -f results/prob2_raw.txt
-	@# VARM experiments with different weight types
-	@for n in $(VARM_NODES); do \
-		m=$$((2*$$n)); \
-		max_m=$$(($$n*($$n-1)/2)); \
-		while [ $$m -le $$max_m ] && [ $$m -le $$((8*$$n)) ]; do \
-			for weight_type in unweighted 01 wbfs_5; do \
-				for run in `seq 1 $(RUNS)`; do \
-					seed=$$(($$RANDOM)); \
-					echo "VARM n=$$n m=$$m weight=$$weight_type run=$$run"; \
-					$(TIME_CMD) -o results/time_temp.txt ./prob2 VARM $$n $$m $$weight_type $$seed >> results/prob2_raw.txt 2>&1; \
-				done; \
-			done; \
-			m=$$(($$m*2)); \
-		done; \
-	done
-
-# Problem 3 experiments
-run_prob3:
-	@echo "Running Problem 3 experiments..."
-	@rm -f results/prob3_raw.txt
-	@# VARM experiments
-	@for n in $(VARM_NODES); do \
-		m=$$((2*$$n)); \
-		max_m=$$(($$n*($$n-1))); \
-		while [ $$m -le $$max_m ] && [ $$m -le $$((8*$$n)) ]; do \
-			for run in `seq 1 $(RUNS)`; do \
-				seed=$$(($$RANDOM)); \
-				echo "VARM n=$$n m=$$m run=$$run"; \
-				$(TIME_CMD) -o results/time_temp.txt ./prob3 VARM $$n $$m $$seed >> results/prob3_raw.txt 2>&1; \
-			done; \
-			m=$$(($$m*2)); \
-		done; \
-	done
-	@# VARN experiments
-	@for n in $(VARN_NODES); do \
-		for sparsity in 1 2 4; do \
-			for run in `seq 1 $(RUNS)`; do \
-				seed=$$(($$RANDOM)); \
-				echo "VARN n=$$n sparsity=$$sparsity run=$$run"; \
-				$(TIME_CMD) -o results/time_temp.txt ./prob3 VARN $$n $$sparsity $$seed >> results/prob3_raw.txt 2>&1; \
-			done; \
-		done; \
-	done
-
-# Process results and generate plots
-process: 
-	@echo "Processing results..."
-	./process.sh
-	@echo "Generating plots..."
-	gnuplot plot.gnu
-
-.PHONY: all clean dirs experiments run_prob1 run_prob2 run_prob3 process
+	rm -f prob1 prob2 prob3
+	rm -rf $(LOG_DIR)
+	rm -f *.dat *.png

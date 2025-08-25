@@ -1,111 +1,154 @@
 #!/bin/bash
+set -e
+LOG_DIR=./logs
 
-# Create processed results directory
-mkdir -p results/processed
-
-# Function to average results
-average_results() {
-    local input_file=$1
-    local output_file=$2
-    local problem=$3
-    
-    echo "Processing $input_file -> $output_file"
-    
-    # Process results based on problem type
-    case $problem in
-        "prob1")
-            # Format: GRAPH_TRAVERSAL,graph_type,n,m,algorithm,time
-            awk -F',' '
-            {
-                key = $2 "," $3 "," $4 "," $5
-                sum[key] += $6
-                count[key]++
-            }
-            END {
-                for (k in sum) {
-                    split(k, parts, ",")
-                    print parts[1] "," parts[2] "," parts[3] "," parts[4] "," sum[k]/count[k]
-                }
-            }' $input_file | sort -t',' -k1,1 -k2,2n -k3,3n -k4,4 > $output_file
-            ;;
-            
-        "prob2")
-            # Format: SHORTEST_PATH,graph_type,n,m,weight_type,algorithm,time
-            awk -F',' '
-            {
-                key = $2 "," $3 "," $4 "," $5 "," $6
-                sum[key] += $7
-                count[key]++
-            }
-            END {
-                for (k in sum) {
-                    split(k, parts, ",")
-                    print parts[1] "," parts[2] "," parts[3] "," parts[4] "," parts[5] "," sum[k]/count[k]
-                }
-            }' $input_file | sort -t',' -k1,1 -k2,2n -k3,3n -k4,4 -k5,5 > $output_file
-            ;;
-            
-        "prob3")
-            # Format: SCC,graph_type,n,m,algorithm,time
-            awk -F',' '
-            {
-                key = $2 "," $3 "," $4 "," $5
-                sum[key] += $6
-                count[key]++
-            }
-            END {
-                for (k in sum) {
-                    split(k, parts, ",")
-                    print parts[1] "," parts[2] "," parts[3] "," parts[4] "," sum[k]/count[k]
-                }
-            }' $input_file | sort -t',' -k1,1 -k2,2n -k3,3n -k4,4 > $output_file
-            ;;
-    esac
+# Function to average columns with awk
+avg_col() {
+  awk -F',' -v col=$1 '{
+    sum[$5]+=$col; count[$5]++
+  } END {
+    for (alg in sum) {
+      print alg, sum[alg]/count[alg]
+    }
+  }' $2 | sort
 }
 
-# Process each problem's results
-if [ -f "results/prob1_raw.txt" ]; then
-    average_results "results/prob1_raw.txt" "results/processed/prob1_avg.txt" "prob1"
-    
-    # Split by graph type and algorithm for plotting
-    grep "VARM" results/processed/prob1_avg.txt | grep "BFS" > results/processed/prob1_varm_bfs.txt
-    grep "VARM" results/processed/prob1_avg.txt | grep "DFS_ITER" > results/processed/prob1_varm_dfs_iter.txt
-    grep "VARM" results/processed/prob1_avg.txt | grep "DFS_REC" > results/processed/prob1_varm_dfs_rec.txt
-    
-    grep "VARN" results/processed/prob1_avg.txt | grep "BFS" > results/processed/prob1_varn_bfs.txt
-    grep "VARN" results/processed/prob1_avg.txt | grep "DFS_ITER" > results/processed/prob1_varn_dfs_iter.txt
-    grep "VARN" results/processed/prob1_avg.txt | grep "DFS_REC" > results/processed/prob1_varn_dfs_rec.txt
-fi
+# ---------- Problem 1: Graph Traversal ----------
+# Extract time data from program output and memory data from /usr/bin/time
+grep "GRAPH_TRAVERSAL" $LOG_DIR/prob1_varm.log > p1_varm_time.tmp
+grep "GRAPH_TRAVERSAL" $LOG_DIR/prob1_varn.log > p1_varn_time.tmp
+grep "MEMORY" $LOG_DIR/prob1_varm.log > p1_varm_mem.tmp
+grep "MEMORY" $LOG_DIR/prob1_varn.log > p1_varn_mem.tmp
 
-if [ -f "results/prob2_raw.txt" ]; then
-    average_results "results/prob2_raw.txt" "results/processed/prob2_avg.txt" "prob2"
-    
-    # Split by weight type and algorithm
-    for weight in unweighted 01 wbfs_5 wbfs_10; do
-        grep "VARM.*$weight" results/processed/prob2_avg.txt | grep "DIJKSTRA" > results/processed/prob2_varm_${weight}_dijkstra.txt
-        grep "VARM.*$weight" results/processed/prob2_avg.txt | grep "BFS_VARIANT" > results/processed/prob2_varm_${weight}_bfs.txt
-    done
-fi
+# Time averages (convert microseconds to seconds)
+awk -F',' '{
+  sum[$5]+=$6/1000000; count[$5]++
+} END {
+  for (alg in sum) {
+    print alg, sum[alg]/count[alg]
+  }
+}' p1_varm_time.tmp | sort > prob1_varm_time.dat
 
-if [ -f "results/prob3_raw.txt" ]; then
-    average_results "results/prob3_raw.txt" "results/processed/prob3_avg.txt" "prob3"
-    
-    # Split by graph type and algorithm
-    grep "VARM" results/processed/prob3_avg.txt | grep "ALGO1_DFS" > results/processed/prob3_varm_algo1.txt
-    grep "VARM" results/processed/prob3_avg.txt | grep "ALGO2_BFS" > results/processed/prob3_varm_algo2.txt
-    grep "VARM" results/processed/prob3_avg.txt | grep "ALGO3_KOSARAJU" > results/processed/prob3_varm_algo3.txt
-    
-    grep "VARN" results/processed/prob3_avg.txt | grep "ALGO1_DFS" > results/processed/prob3_varn_algo1.txt
-    grep "VARN" results/processed/prob3_avg.txt | grep "ALGO2_BFS" > results/processed/prob3_varn_algo2.txt
-    grep "VARN" results/processed/prob3_avg.txt | grep "ALGO3_KOSARAJU" > results/processed/prob3_varn_algo3.txt
-fi
+awk -F',' '{
+  sum[$5]+=$6/1000000; count[$5]++
+} END {
+  for (alg in sum) {
+    print alg, sum[alg]/count[alg]
+  }
+}' p1_varn_time.tmp | sort > prob1_varn_time.dat
 
-# Convert CSV files to space-separated format for GNUplot
-echo "Converting data files to GNUplot format..."
-for file in results/processed/*.txt; do
-    if [ -f "$file" ]; then
-        sed 's/,/ /g' "$file" > "${file%.txt}.dat"
-    fi
-done
+# Memory averages by algorithm
+awk -F',' '{
+  sum[$5]+=$6; count[$5]++
+} END {
+  for (alg in sum) {
+    print alg, sum[alg]/count[alg]
+  }
+}' p1_varm_mem.tmp | sort > prob1_varm_mem.dat
 
-echo "Processing complete!"
+awk -F',' '{
+  sum[$5]+=$6; count[$5]++
+} END {
+  for (alg in sum) {
+    print alg, sum[alg]/count[alg]
+  }
+}' p1_varn_mem.tmp | sort > prob1_varn_mem.dat
+
+gnuplot -persist <<EOF
+set terminal pngcairo size 900,600
+set output "prob1_time.png"
+set title "Graph Traversal Time (VARM vs VARN)"
+set style data histograms
+set style fill solid 1.0 border -1
+set boxwidth 0.6
+set ylabel "Time (s)"
+plot "prob1_varm_time.dat" using 2:xtic(1) title "VARM", \
+     "prob1_varn_time.dat" using 2:xtic(1) title "VARN"
+
+set output "prob1_mem.png"
+set title "Graph Traversal Memory (VARM vs VARN)"
+set ylabel "Memory (KB)"
+plot "prob1_varm_mem.dat" using 2:xtic(1) title "VARM", \
+     "prob1_varn_mem.dat" using 2:xtic(1) title "VARN"
+EOF
+
+# ---------- Problem 2: Shortest Path ----------
+grep "SHORTEST_PATH" $LOG_DIR/prob2.log > p2_time.tmp
+grep "MEMORY" $LOG_DIR/prob2.log > p2_mem.tmp
+
+awk -F',' '{
+  sum[$6]+=$7/1000000; count[$6]++
+} END {
+  for (alg in sum) {
+    print alg, sum[alg]/count[alg]
+  }
+}' p2_time.tmp | sort > prob2_time.dat
+
+awk -F',' '{
+  sum[$5]+=$6; count[$5]++
+} END {
+  for (alg in sum) {
+    print alg, sum[alg]/count[alg]
+  }
+}' p2_mem.tmp | sort > prob2_mem.dat
+
+gnuplot -persist <<EOF
+set terminal pngcairo size 900,600
+set output "prob2_time.png"
+set title "Shortest Path Time"
+set style data histograms
+set style fill solid 1.0 border -1
+set boxwidth 0.6
+set ylabel "Time (s)"
+set yrange [0:*]
+set format y "%.1e"
+plot "prob2_time.dat" using 2:xtic(1) title "Algorithms"
+
+set output "prob2_mem.png"
+set title "Shortest Path Memory"
+set ylabel "Memory (KB)"
+set format y "%.0f"
+plot "prob2_mem.dat" using 2:xtic(1) title "Algorithms"
+EOF
+
+# ---------- Problem 3: SCC ----------
+grep "SCC" $LOG_DIR/prob3.log > p3_time.tmp
+grep "MEMORY" $LOG_DIR/prob3.log > p3_mem.tmp
+
+awk -F',' '{
+  sum[$5]+=$6/1000000; count[$5]++
+} END {
+  for (alg in sum) {
+    print alg, sum[alg]/count[alg]
+  }
+}' p3_time.tmp | sort > prob3_time.dat
+
+awk -F',' '{
+  sum[$5]+=$6; count[$5]++
+} END {
+  for (alg in sum) {
+    print alg, sum[alg]/count[alg]
+  }
+}' p3_mem.tmp | sort > prob3_mem.dat
+
+gnuplot -persist <<EOF
+set terminal pngcairo size 900,600
+set output "prob3_time.png"
+set title "SCC Algorithms Time"
+set style data histograms
+set style fill solid 1.0 border -1
+set boxwidth 0.6
+set ylabel "Time (s)"
+plot "prob3_time.dat" using 2:xtic(1) title "Algorithms"
+
+set output "prob3_mem.png"
+set title "SCC Algorithms Memory"
+set ylabel "Memory (KB)"
+plot "prob3_mem.dat" using 2:xtic(1) title "Algorithms"
+EOF
+
+# Cleanup
+rm -f p1_varm_time.tmp p1_varn_time.tmp p1_varm_mem.tmp p1_varn_mem.tmp
+rm -f p2_time.tmp p2_mem.tmp p3_time.tmp p3_mem.tmp
+
+echo "✅ Plots generated: prob1_time.png prob1_mem.png prob2_time.png prob2_mem.png prob3_time.png prob3_mem.png"

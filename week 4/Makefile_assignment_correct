@@ -1,0 +1,126 @@
+# Makefile for Graph Algorithms Assignment (Correct Input Sizes)
+CC = g++
+CFLAGS = -std=c++11 -O2
+
+# Programs to compile
+PROGRAMS = prob1 prob2 prob3
+
+# Assignment required node sizes
+VARM_NODES = 200 500 1000
+VARN_NODES = 100 200 300 400 500 600 700 800 900 1000
+
+# Number of runs for averaging
+RUNS = 5
+
+all: $(PROGRAMS)
+
+prob1: prob1.cpp graph.h
+	$(CC) $(CFLAGS) -o prob1 prob1.cpp
+
+prob2: prob2.cpp graph.h
+	$(CC) $(CFLAGS) -o prob2 prob2.cpp
+
+prob3: prob3.cpp graph.h
+	$(CC) $(CFLAGS) -o prob3 prob3.cpp
+
+clean:
+	rm -f $(PROGRAMS) *.o
+	rm -f results/*.txt plots/*.png
+
+setup:
+	mkdir -p results plots
+
+# VARM experiments (Variable edges, fixed nodes)
+test_varm:
+	@echo "Running VARM experiments..."
+	@# N = 200, M = 2n to n(n-1)/2
+	@for run in `seq 1 $(RUNS)`; do \
+		seed=$$(($$RANDOM + $$run)); \
+		for m in 400 800 1600 3200 6400 12800 19900; do \
+			/usr/bin/time -f "%e,%M" -o results/time_temp.txt ./prob1 VARM 200 $$m $$seed >> results/prob1_raw.txt 2>&1; \
+		done; \
+	done
+	@# N = 500, M = 2n to n(n-1)/2
+	@for run in `seq 1 $(RUNS)`; do \
+		seed=$$(($$RANDOM + $$run)); \
+		for m in 1000 2000 4000 8000 16000 32000 64000 124750; do \
+			/usr/bin/time -f "%e,%M" -o results/time_temp.txt ./prob1 VARM 500 $$m $$seed >> results/prob1_raw.txt 2>&1; \
+		done; \
+	done
+	@# N = 1000, M = 2n to n(n-1)/2
+	@for run in `seq 1 $(RUNS)`; do \
+		seed=$$(($$RANDOM + $$run)); \
+		for m in 2000 4000 8000 16000 32000 64000 128000 256000 499500; do \
+			/usr/bin/time -f "%e,%M" -o results/time_temp.txt ./prob1 VARM 1000 $$m $$seed >> results/prob1_raw.txt 2>&1; \
+		done; \
+	done
+
+# VARN experiments (Variable nodes, fixed sparsity)
+test_varn:
+	@echo "Running VARN experiments..."
+	@# Sparsity 1: m = 2n
+	@for run in `seq 1 $(RUNS)`; do \
+		seed=$$(($$RANDOM + $$run)); \
+		for n in $(VARN_NODES); do \
+			/usr/bin/time -f "%e,%M" -o results/time_temp.txt ./prob1 VARN $$n 1 $$seed >> results/prob1_raw.txt 2>&1; \
+		done; \
+	done
+	@# Sparsity 2: m = n*log(n)
+	@for run in `seq 1 $(RUNS)`; do \
+		seed=$$(($$RANDOM + $$run)); \
+		for n in $(VARN_NODES); do \
+			/usr/bin/time -f "%e,%M" -o results/time_temp.txt ./prob1 VARN $$n 2 $$seed >> results/prob1_raw.txt 2>&1; \
+		done; \
+	done
+	@# Sparsity 3: m = n*sqrt(n)
+	@for run in `seq 1 $(RUNS)`; do \
+		seed=$$(($$RANDOM + $$run)); \
+		for n in $(VARN_NODES); do \
+			/usr/bin/time -f "%e,%M" -o results/time_temp.txt ./prob1 VARN $$n 3 $$seed >> results/prob1_raw.txt 2>&1; \
+		done; \
+	done
+	@# Sparsity 4: m = n*(n-1)/2
+	@for run in `seq 1 $(RUNS)`; do \
+		seed=$$(($$RANDOM + $$run)); \
+		for n in $(VARN_NODES); do \
+			/usr/bin/time -f "%e,%M" -o results/time_temp.txt ./prob1 VARN $$n 4 $$seed >> results/prob1_raw.txt 2>&1; \
+		done; \
+	done
+
+# Similar for prob2 and prob3...
+test_prob2_assignment:
+	@echo "Running Problem 2 with assignment sizes..."
+	@for run in `seq 1 $(RUNS)`; do \
+		seed=$$(($$RANDOM + $$run)); \
+		for n in $(VARM_NODES); do \
+			for m in `echo "$$n*2 $$n*4 $$n*8 $$n*16" | tr ' ' '\n'`; do \
+				/usr/bin/time -f "%e,%M" -o results/time_temp.txt ./prob2 VARM $$n $$m unweighted $$seed >> results/prob2_raw.txt 2>&1; \
+				/usr/bin/time -f "%e,%M" -o results/time_temp.txt ./prob2 VARM $$n $$m 01 $$seed >> results/prob2_raw.txt 2>&1; \
+				/usr/bin/time -f "%e,%M" -o results/time_temp.txt ./prob2 VARM $$n $$m wbfs_5 $$seed >> results/prob2_raw.txt 2>&1; \
+			done; \
+		done; \
+	done
+
+test_prob3_assignment:
+	@echo "Running Problem 3 with assignment sizes..."
+	@for run in `seq 1 $(RUNS)`; do \
+		seed=$$(($$RANDOM + $$run)); \
+		for n in $(VARM_NODES); do \
+			for m in `echo "$$n*2 $$n*4 $$n*8 $$n*16" | tr ' ' '\n'`; do \
+				/usr/bin/time -f "%e,%M" -o results/time_temp.txt ./prob3 VARM $$n $$m $$seed >> results/prob3_raw.txt 2>&1; \
+			done; \
+		done; \
+	done
+
+# Complete assignment workflow
+assignment: setup all test_varm test_varn test_prob2_assignment test_prob3_assignment process plot
+	@echo "Assignment experiments complete!"
+
+process:
+	chmod +x process.sh
+	./process.sh
+
+plot:
+	gnuplot plot.gnu
+
+.PHONY: all clean setup test_varm test_varn test_prob2_assignment test_prob3_assignment assignment process plot

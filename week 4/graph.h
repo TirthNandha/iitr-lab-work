@@ -59,11 +59,8 @@ public:
         while (g.m < edges) {
             int u = rand() % nodes;
             int v = rand() % nodes;
-            
             if (u == v) continue; // no self-loops
-            
             if (!directed && u > v) swap(u, v); // for undirected graphs, normalize edge representation
-            
             if (usedEdges.find({u, v}) == usedEdges.end()) {
                 int weight = (maxWeight > 1) ? (rand() % maxWeight) + 1 : 1;
                 g.addEdge(u, v, weight);
