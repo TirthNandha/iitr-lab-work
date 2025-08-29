@@ -174,7 +174,7 @@ int main() {
     test1Stream << "N,M,Time_ms" << endl;
     
     cout << "Creating input file with 1000000 numbers..." << endl;
-    generateInputFile("perf_input_1000000.txt", 1000000);
+    generateInputFile("input_1000000.txt", 1000000);
     
     cout << "Executing performance tests..." << endl;
     cout << "Threads\tTime(ms)" << endl;
@@ -188,7 +188,7 @@ int main() {
         
         long run = 3;
         while (run-- > 0) {
-            double time = runPerformanceTest(1000000, m, "perf_input_1000000.txt");
+            double time = runPerformanceTest(1000000, m, "input_1000000.txt");
             if (time > 0) {
                 totalTime += time;
                 validCount++;
@@ -220,7 +220,7 @@ int main() {
     cout << "--------\t--------" << endl;
     
     for (long n : sizeValues) {
-        string fileName = "perf_input_" + to_string(n) + ".txt";
+        string fileName = "input_" + to_string(n) + ".txt";
             generateInputFile(fileName, n);
         
         double totalTime = 0;

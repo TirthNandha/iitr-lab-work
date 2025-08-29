@@ -18,6 +18,6 @@ plots:
 clean:
 	rm -f part1 part2 *.png
 	rm -rf results/
-	rm -f perf_input_*.txt
+	rm -f input_*.txt
 
 .PHONY: all run plots clean
