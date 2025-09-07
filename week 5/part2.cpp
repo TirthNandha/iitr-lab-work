@@ -24,7 +24,7 @@ vector<ListNode*> nodeStorage;
 ListNode* listHead = nullptr;
 ListNode* listTail = nullptr;
 long nextIndex = 0;
-pthread_mutex_t indexMutex;        // Mutex for protecting currentIndex
+pthread_mutex_t indexMutex; 
 
 struct ThreadData {
     long threadNum;
