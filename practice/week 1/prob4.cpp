@@ -33,9 +33,4 @@ int main(){
     cout << "Enter k: " << endl;
     cin >> k;
     cout << binarySearch(arr, k);
-
-    // for(int num: arr){
-    //     cout << num << endl;
-    // }
-
 }
