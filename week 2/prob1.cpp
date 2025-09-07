@@ -8,18 +8,18 @@ using namespace std;
 int n, m;
 bool directed;
 
-void dfsRec(vector<vector<int>> &adj, vector<bool> &visited ,int s, int level, vector<pair<int, int>> & res) {
+void dfsRec(vector<vector<int>> &adj, vector<bool> &visited ,int s, int level) {
         visited[s] = true;
-        res.push_back({s, level});
+        cout << s << " " << level << endl;
         for(int adjVert: adj[s]) {
             if(!visited[adjVert])
-            dfsRec(adj, visited, adjVert, level + 1, res);
+            dfsRec(adj, visited, adjVert, level + 1);
         }
     }
 
 void bfs(vector<vector<int>> &adj) {
     vector<bool> visited(adj.size(), false);
-    vector<pair<int, int>> res;
+    // vector<pair<int, int>> res;
     queue<pair<int, int>> queue;
     queue.push({0, 0});
     visited[0] = true;
@@ -30,7 +30,8 @@ void bfs(vector<vector<int>> &adj) {
         int level = front.second;
         queue.pop();
 
-        res.push_back({curr, level});
+        // res.push_back({curr, level});
+        cout << curr << " " << level << endl;
         
         for(int adjVert: adj[curr]){
             if(!visited[adjVert]){
@@ -40,18 +41,18 @@ void bfs(vector<vector<int>> &adj) {
         }
     }
 
-    for (auto& pair : res) {
-        cout << pair.first << " " << pair.second << endl;
-    }
+    // for (auto& pair : res) {
+    //     cout << pair.first << " " << pair.second << endl;
+    // }
 }
 
 void dfs(vector<vector<int>> &adj) {
     vector<bool> visited(adj.size(), false);
-    vector<pair<int, int>> res;
-    dfsRec(adj, visited, 0, 0, res);
-    for (auto& pair : res) {
-        cout << pair.first << " " << pair.second << endl;
-    }
+    // vector<pair<int, int>> res;
+    dfsRec(adj, visited, 0, 0);
+    // for (auto& pair : res) {
+    //     cout << pair.first << " " << pair.second << endl;
+    // }
 }
 void dijkstra(vector<list<pair<int,int>>> &adj) {
     int n = adj.size();
@@ -66,7 +67,7 @@ void dijkstra(vector<list<pair<int,int>>> &adj) {
     while(!pq.empty()){
         pair<int, int> top = pq.top();
         pq.pop();
-        int d = top.first;
+        // int d = top.first;
         int u = top.second;
 
         if(visited[u]) continue;
@@ -78,15 +79,16 @@ void dijkstra(vector<list<pair<int,int>>> &adj) {
             if(!visited[v] && dist[u] + w < dist[v]){
                 dist[v] = dist[u] + w;
                 parent[v] = u;
+                cout << parent[v] << " " << v << endl;
                 pq.push({dist[v], v});
             }
         }
     }
-    for (int v = 1; v < n; ++v) {
-        if (parent[v] != -1) {
-            cout << parent[v] << " " << v << endl;
-        }
-    }
+    // for (int v = 1; v < n; ++v) {
+    //     if (parent[v] != -1) {
+    //         cout << parent[v] << " " << v << endl;
+    //     }
+    // }
 }
 void wbfs(vector<list<pair<int, int>>> &adj) {
     int n = adj.size();
@@ -149,16 +151,17 @@ void prim(vector<list<pair<int,int>>> &adj) {
             if (!visited[v] && w < key[v]) {
                 key[v] = w;
                 parent[v] = u;
+                cout << parent[v] << " " << v << endl;
                 pq.push({key[v], v});
             }
         }
     }
 
-    for (int v = 1; v < n; ++v) {
-        if (parent[v] != -1) {
-            cout << parent[v] << " " << v << endl;
-        }
-    }
+    // for (int v = 1; v < n; ++v) {
+    //     if (parent[v] != -1) {
+    //         cout << parent[v] << " " << v << endl;
+    //     }
+    // }
 }
 
 
