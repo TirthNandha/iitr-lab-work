@@ -2,45 +2,45 @@
 #include <list>
 using namespace std;
 
+list<int> mergeLists(list<int>& left, list<int>& right) {
+    list<int> result;
+    auto it1 = left.begin();
+    auto it2 = right.begin();
 
-void mergeSort(list<int>& lst) {
-	if (lst.size() <= 1) return;
-	auto it = lst.begin();
-	advance(it, lst.size()/2);
-	list<int> left, right;
+    while (it1 != left.end() && it2 != right.end()) {
+        if (*it1 <= *it2) {
+            result.push_back(*it1);
+            ++it1;
+        } else {
+            result.push_back(*it2);
+            ++it2;
+        }
+    }
 
-	left.splice(left.end(), lst, lst.begin(), it);
-	right.splice(right.end(), lst, lst.begin(), lst.end());
-
-	mergeSort(left);
-	mergeSort(right);
-
-	lst.clear();
-
-	auto it1 = left.begin(), it2 = right.begin();
-
-	while(it1 != left.end() && it2 != right.end()) {
-		if(*it1< *it2) {
-			lst.splice(lst.end(), left, it1++);
-		}
-		else {
-			lst.splice(lst.end(), right, it2++);
-		}
-	}
-
-	lst.splice(lst.end(), left);
-	lst.splice(lst.end(), right);
-
+    // Copy remaining elements
+    while (it1 != left.end()) result.push_back(*it1++);
+    while (it2 != right.end()) result.push_back(*it2++);
+    return result;
 }
 
-int main()
-{
-	list<int> lst = {9, -30, 29, 60};
-	mergeSort(lst);
+list<int> mergeSort(list<int>& lst) {
+    if (lst.size() <= 1) return lst; // base case
 
-	for(int num: lst) {
-		cout << num << endl;
-	}
+    auto mid = lst.begin();
+    advance(mid, lst.size() / 2); // find middle iterator
 
-	return 0;
+    list<int> left(lst.begin(), mid);
+    list<int> right(mid, lst.end());
+
+    left = mergeSort(left);
+    right = mergeSort(right);
+
+    return mergeLists(left, right);
+}
+
+int main() {
+    list<int> lst = {4, 2, 7, 1, 5, 3};
+    lst = mergeSort(lst);
+
+    for (int x : lst) cout << x << " ";
 }

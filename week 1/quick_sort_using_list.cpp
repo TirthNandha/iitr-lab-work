@@ -3,25 +3,29 @@
 using namespace std;
 
 
-void quickSort(list<int>& lst) {
-    if (lst.size() <= 1) return;
+list<int> quickSort(list<int>& lst) {
+    if(lst.size()<=1) return lst;
+
+    list<int> less, equal, greater;
 
     int pivot = lst.front();
-    lst.pop_front();
 
-    list<int> left, right;
-    for (int val : lst) {
-        if (val <= pivot) left.push_back(val);
-        else right.push_back(val);
+    //partitioning
+    for(int num: lst){
+        if(num< pivot) less.push_back(num);
+        else if(num > pivot) greater.push_back(num);
+        else equal.push_back(num);
     }
 
-    quickSort(left);
-    quickSort(right);
+    less = quickSort(less);
+    greater = quickSort(greater);
 
-    lst.clear();
-    lst.splice(lst.end(), left);
-    lst.push_back(pivot);
-    lst.splice(lst.end(), right);
+    list<int> result;
+    result.splice(result.end(), less);
+    result.splice(result.end(), equal);
+    result.splice(result.end(), greater);
+
+    return result;
 }
 
 int main()
