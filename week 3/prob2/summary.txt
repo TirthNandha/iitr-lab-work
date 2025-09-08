@@ -1,2 +1,3 @@
 Total_Time(ms) Max_Memory(KB)
-32070.015471000 3924
+23974.966192000 Command exited with non-zero status 127
+3772
