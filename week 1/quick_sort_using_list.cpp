@@ -30,13 +30,17 @@ list<int> quickSort(list<int>& lst) {
 
 int main()
 {
-    list<int> arr = {-30, 9, 29, 60};
-    quickSort(arr);
-    
-    
+    list<int> arr = {5 , -30, 20, 6, 8, 2};
+    cout << "Original List: " << endl;
     for(int num: arr){
         cout << num << endl;
     }
+    list<int> result = quickSort(arr);
+    cout << "Sorted list: " << endl;
+    for(int num: result){
+        cout << num << endl;
+    }
+    
 
     return 0;
 }
